@@ -1,65 +1,469 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { FormEvent, useMemo, useState } from "react";
+import { offensive } from "@/lib/offensiveb64";
+
+const DATAMUSE_URL = "https://api.datamuse.com/words?";
+
+type SynAnt = "synonym" | "antonym";
+type SylMode = "exact" | "less";
+
+interface DatamuseWord {
+  word: string;
+  score?: number;
+  numSyllables?: number;
+  // Datamuse can send extra stuff – we ignore it
+  [key: string]: unknown;
+}
+
+interface SearchState {
+  rhyme: string;
+  starts: string;
+  synAntChoice: SynAnt;
+  synAntWord: string;
+  syllableMode: SylMode;
+  syllables: string; // keep as string for controlled input
+}
+
+interface SearchResult {
+  perfect: DatamuseWord[];
+  imperfect: DatamuseWord[];
+}
+
+function buildQuery(perfect: boolean, state: SearchState): string | null {
+  const params: string[] = [];
+  const rhyme = state.rhyme.trim();
+  const starts = state.starts.trim();
+  const synWord = state.synAntWord.trim();
+
+  if (rhyme) {
+    if (perfect) {
+      params.push(`rel_rhy=${encodeURIComponent(rhyme)}`);
+    } else {
+      params.push(`rel_nry=${encodeURIComponent(rhyme)}`);
+    }
+  } else if (!perfect) {
+    // In your original app, near-rhyme query is skipped if there's no rhyme word
+    return null;
+  }
+
+  if (starts) {
+    params.push(`sp=${encodeURIComponent(starts)}*`);
+  }
+
+  if (synWord) {
+    if (state.synAntChoice === "synonym") {
+      params.push(`rel_syn=${encodeURIComponent(synWord)}`);
+    } else {
+      params.push(`rel_ant=${encodeURIComponent(synWord)}`);
+    }
+  }
+
+  if (params.length === 0) return null;
+
+  params.push("max=50");
+  return params.join("&");
+}
+
+async function fetchWordList(query: string): Promise<DatamuseWord[]> {
+  const url = `${DATAMUSE_URL}${query}`;
+  const resp = await fetch(url);
+
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => "");
+    throw new Error(
+      `Datamuse error ${resp.status}${text ? `: ${text}` : ""}`
+    );
+  }
+
+  const data = (await resp.json()) as DatamuseWord[];
+  return data;
+}
+
+async function getWordLists(state: SearchState): Promise<SearchResult> {
+  const perfectQuery = buildQuery(true, state);
+  const imperfectQuery = buildQuery(false, state);
+
+  const [perfect, imperfect] = await Promise.all([
+    perfectQuery ? fetchWordList(perfectQuery) : Promise.resolve([]),
+    imperfectQuery ? fetchWordList(imperfectQuery) : Promise.resolve([]),
+  ]);
+
+  return { perfect, imperfect };
+}
+
+function isProfane(word: string): boolean {
+  const b64 = typeof btoa === "function" ? btoa(word) : "";
+  return offensive.has(b64);
+}
+
+function passesSyllableFilter(
+  itemSyllables: number | undefined,
+  requested: number,
+  mode: SylMode
+): boolean {
+  if (!requested || requested <= 0) return true;
+  if (typeof itemSyllables !== "number") return true;
+
+  if (mode === "exact") {
+    return itemSyllables === requested;
+  }
+
+  // "less than"
+  return itemSyllables < requested;
+}
+
+export default function Page() {
+  const [state, setState] = useState<SearchState>({
+    rhyme: "",
+    starts: "",
+    synAntChoice: "synonym",
+    synAntWord: "",
+    syllableMode: "exact",
+    syllables: "",
+  });
+
+  const [results, setResults] = useState<SearchResult>({
+    perfect: [],
+    imperfect: [],
+  });
+
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [copiedWord, setCopiedWord] = useState<string | null>(null);
+
+  const syllablesNumeric = useMemo(
+    () => (state.syllables ? parseInt(state.syllables, 10) || 0 : 0),
+    [state.syllables]
+  );
+
+  const syllableDisabled = state.rhyme.trim().length === 0;
+
+  const filteredPerfect = useMemo(
+    () =>
+      results.perfect
+        .filter((w) => !isProfane(w.word))
+        .filter((w) =>
+          passesSyllableFilter(w.numSyllables, syllablesNumeric, state.syllableMode)
+        ),
+    [results.perfect, syllablesNumeric, state.syllableMode]
+  );
+
+  const filteredImperfect = useMemo(
+    () =>
+      results.imperfect
+        .filter((w) => !isProfane(w.word))
+        .filter((w) =>
+          passesSyllableFilter(w.numSyllables, syllablesNumeric, state.syllableMode)
+        ),
+    [results.imperfect, syllablesNumeric, state.syllableMode]
+  );
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+    setCopiedWord(null);
+
+    // Nothing entered at all – mirror your original behavior: just do nothing.
+    if (
+      !state.rhyme.trim() &&
+      !state.starts.trim() &&
+      !state.synAntWord.trim()
+    ) {
+      setError("Please enter at least one search term.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const nextResults = await getWordLists(state);
+      setResults(nextResults);
+
+      const totalPerfect = nextResults.perfect.length;
+      const totalImperfect = nextResults.imperfect.length;
+
+      if (totalPerfect === 0 && totalImperfect === 0) {
+        setInfo("No results found. Try adjusting your filters.");
+      } else if (totalImperfect > 0) {
+        setInfo(
+          `Showing ${totalPerfect} perfect rhymes and ${totalImperfect} near rhymes.`
+        );
+      } else {
+        setInfo(`Showing ${totalPerfect} perfect rhymes.`);
+      }
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Unexpected error contacting API.";
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function handleClear() {
+    setState({
+      rhyme: "",
+      starts: "",
+      synAntChoice: "synonym",
+      synAntWord: "",
+      syllableMode: "exact",
+      syllables: "",
+    });
+    setResults({ perfect: [], imperfect: [] });
+    setError(null);
+    setInfo(null);
+    setCopiedWord(null);
+  }
+
+  async function handleCopy(word: string) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(word);
+        setCopiedWord(word);
+        setTimeout(() => setCopiedWord(null), 2000);
+      } else {
+        // Fallback – best effort
+        const ta = document.createElement("textarea");
+        ta.value = word;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        setCopiedWord(word);
+        setTimeout(() => setCopiedWord(null), 2000);
+      }
+    } catch {
+      setError("Unable to copy to clipboard.");
+    }
+  }
+
+  const syllableLabel =
+    syllablesNumeric === 1 ? "syllable" : "syllables";
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+    <main className="flex min-h-screen flex-col items-center pb-8">
+      <header className="mt-6 text-center">
+        <h1 className="text-4xl md:text-5xl text-slate-800 tracking-wide">
+          Poet&apos;s Pal&trade;
+        </h1>
+        <h2 className="mt-1 text-base md:text-lg italic text-slate-600">
+          Powered by AI
+        </h2>
+      </header>
+
+      <section className="mt-6 w-full max-w-xl px-4">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full space-y-4 rounded-lg bg-white/70 p-4 shadow-md backdrop-blur"
+        >
+          <div className="grid grid-cols-[auto,1fr] items-center gap-3">
+            <label className="whitespace-nowrap text-lg">
+              Rhymes with
+            </label>
+            <input
+              type="text"
+              className="w-full rounded border border-slate-300 px-2 py-1 text-base font-sans focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400"
+              value={state.rhyme}
+              onChange={(e) =>
+                setState((s) => ({ ...s, rhyme: e.target.value }))
+              }
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+            <label className="whitespace-nowrap text-lg">
+              Starts with
+            </label>
+            <input
+              type="text"
+              className="w-full rounded border border-slate-300 px-2 py-1 text-base font-sans focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400"
+              value={state.starts}
+              onChange={(e) =>
+                setState((s) => ({ ...s, starts: e.target.value }))
+              }
+            />
+
+            <label className="whitespace-nowrap text-lg">
+              <select
+                className="mr-1 rounded border border-slate-300 bg-white px-1 py-0.5 text-sm align-middle"
+                value={state.synAntChoice}
+                onChange={(e) =>
+                  setState((s) => ({
+                    ...s,
+                    synAntChoice: e.target.value as SynAnt,
+                  }))
+                }
+              >
+                <option value="synonym">Synonyms</option>
+                <option value="antonym">Antonyms</option>
+              </select>
+              of
+            </label>
+            <input
+              type="text"
+              className="w-full rounded border border-slate-300 px-2 py-1 text-base font-sans focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400"
+              value={state.synAntWord}
+              onChange={(e) =>
+                setState((s) => ({ ...s, synAntWord: e.target.value }))
+              }
+            />
+
+            <label
+              className={`whitespace-nowrap text-sm ${
+                syllableDisabled ? "text-slate-400" : "text-slate-800"
+              }`}
+            >
+              <span className="mr-1 text-xs align-middle">and</span>
+              <select
+                className="rounded border border-slate-300 bg-white px-1 py-0.5 text-sm align-middle"
+                disabled={syllableDisabled}
+                value={state.syllableMode}
+                onChange={(e) =>
+                  setState((s) => ({
+                    ...s,
+                    syllableMode: e.target.value as SylMode,
+                  }))
+                }
+              >
+                <option value="exact">exactly</option>
+                <option value="less">less than</option>
+              </select>
+            </label>
+            <div
+              className={`flex items-center gap-2 ${
+                syllableDisabled ? "text-slate-400" : ""
+              }`}
+            >
+              <input
+                type="number"
+                min={state.syllableMode === "exact" ? 1 : 2}
+                max={20}
+                disabled={syllableDisabled}
+                className="w-16 rounded border border-slate-300 px-1 py-1 text-base font-sans focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400 disabled:bg-slate-100"
+                value={state.syllables}
+                onChange={(e) =>
+                  setState((s) => ({ ...s, syllables: e.target.value }))
+                }
+              />
+              <span className="text-lg">{syllableLabel}</span>
+            </div>
+          </div>
+
+          <div className="mt-3 flex justify-center gap-3">
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="rounded bg-sky-500 px-4 py-1 text-lg text-white shadow hover:bg-sky-600 disabled:opacity-60"
+            >
+              {isLoading ? "Searching..." : "Submit"}
+            </button>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="rounded border border-slate-300 bg-white px-4 py-1 text-lg text-slate-700 shadow hover:bg-slate-50"
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section className="mt-6 w-full max-w-xl px-4 pb-16">
+        {error && (
+          <div className="mb-2 text-center text-lg text-red-700">
+            {error}
+          </div>
+        )}
+        {info && !error && (
+          <div className="mb-2 text-left text-base text-slate-700">
+            {info}
+          </div>
+        )}
+
+        {(filteredPerfect.length > 0 || filteredImperfect.length > 0) && (
+          <div className="overflow-x-auto rounded-lg bg-white/80 shadow">
+            <table className="min-w-full border-collapse">
+              <thead>
+                <tr className="bg-sky-50 text-slate-800">
+                  <th className="px-3 py-2 text-left text-lg font-normal">
+                    Word
+                  </th>
+                  <th
+                    className="px-3 py-2 text-right text-lg font-normal"
+                    title="Score indicates how closely the rhyme matches the target word. The higher the score, the closer the match."
+                  >
+                    Score
+                  </th>
+                  <th className="px-3 py-2 text-center text-lg font-normal">
+                    Syllables
+                  </th>
+                  <th className="px-3 py-2 text-center text-lg font-normal">
+                    Copy
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPerfect.map((item) => (
+                  <tr
+                    key={`p-${item.word}-${item.score ?? ""}`}
+                    className="border-t border-slate-100 odd:bg-sky-50/40"
+                  >
+                    <td className="px-3 py-1 text-left text-xl font-serif">
+                      {item.word}
+                    </td>
+                    <td className="px-3 py-1 text-right text-lg font-serif">
+                      {item.score ?? ""}
+                    </td>
+                    <td className="px-3 py-1 text-center text-lg font-serif">
+                      {item.numSyllables ?? ""}
+                    </td>
+                    <td className="px-3 py-1 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(item.word)}
+                        aria-label={`Copy ${item.word}`}
+                        className="text-xl"
+                      >
+                        {copiedWord === item.word ? "✅" : "📋"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {filteredImperfect.map((item) => (
+                  <tr
+                    key={`i-${item.word}-${item.score ?? ""}`}
+                    className="border-t border-slate-100 odd:bg-sky-50/40"
+                  >
+                    <td className="px-3 py-1 text-left text-xl font-serif">
+                      <em>{item.word}</em>
+                    </td>
+                    <td className="px-3 py-1 text-right text-lg font-serif">
+                      {item.score ?? ""}
+                    </td>
+                    <td className="px-3 py-1 text-center text-lg font-serif">
+                      {item.numSyllables ?? ""}
+                    </td>
+                    <td className="px-3 py-1 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(item.word)}
+                        aria-label={`Copy ${item.word}`}
+                        className="text-xl"
+                      >
+                        {copiedWord === item.word ? "✅" : "📋"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <footer className="mt-4 text-center text-xs text-slate-700">
+          &copy; 2025 Eugene C. Olsen
+        </footer>
+      </section>
+    </main>
   );
 }
