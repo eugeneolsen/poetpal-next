@@ -366,7 +366,7 @@ export default function Page() {
             <button
               type="button"
               onClick={handleClear}
-              className="rounded border border-slate-300 bg-white px-6 py-2 text-3xl text-slate-700 shadow hover:bg-slate-50"
+              className="rounded border border-slate-300 bg-white hover:bg-[#dde7ea] px-6 py-2 text-3xl text-slate-700 shadow"
             >
               Clear
             </button>
@@ -466,7 +466,7 @@ export default function Page() {
           </div>
         )}
 
-        <footer className="mt-4 text-center text-xs text-slate-700">
+        <footer className="mt-4 text-center text-s font-sans text-slate-700">
           &copy; 2025 Eugene C. Olsen
         </footer>
       </section>
