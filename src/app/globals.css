@@ -8,12 +8,11 @@
 
 /* Base font – you can override this later with specific font families if you want */
 /* Base font for body text */
-* {
-  font-family: 'Yellowtail', cursive;
-}
+/* Base font for body text */
 
 /* Background: marble image + gradient */
 body {
+  font-family: 'Yellowtail', cursive;
   min-height: 100vh;
   margin: 0;
   background-image:
