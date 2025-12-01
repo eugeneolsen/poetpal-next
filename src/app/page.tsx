@@ -253,97 +253,105 @@ export default function Page() {
         </h2>
       </header>
 
-      <section className="mt-6 w-full max-w-xl px-4">
+      <section className="mt-6 w-full max-w-4xl px-4">
         <form
           onSubmit={handleSubmit}
-          className="w-full space-y-4 rounded-lg bg-transparent p-4"
+          className="w-full space-y-4 rounded-lg bg-transparent"
         >
-          <div className="grid grid-cols-[auto,1fr] items-center gap-3">
-            <label className="whitespace-nowrap text-lg">
-              Rhymes with
-            </label>
-            <input
-              type="text"
-              className="w-full rounded border border-slate-300 px-2 py-1 text-base font-sans focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400"
-              value={state.rhyme}
-              onChange={(e) =>
-                setState((s) => ({ ...s, rhyme: e.target.value }))
-              }
-            />
-
-            <label className="whitespace-nowrap text-lg">
-              Starts with
-            </label>
-            <input
-              type="text"
-              className="w-full rounded border border-slate-300 px-2 py-1 text-base font-sans focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400"
-              value={state.starts}
-              onChange={(e) =>
-                setState((s) => ({ ...s, starts: e.target.value }))
-              }
-            />
-
-            <label className="whitespace-nowrap text-lg">
-              <select
-                className="mr-1 rounded border border-slate-300 bg-white px-1 py-0.5 text-sm align-middle"
-                value={state.synAntChoice}
-                onChange={(e) =>
-                  setState((s) => ({
-                    ...s,
-                    synAntChoice: e.target.value as SynAnt,
-                  }))
-                }
-              >
-                <option value="synonym">Synonyms</option>
-                <option value="antonym">Antonyms</option>
-              </select>
-              of
-            </label>
-            <input
-              type="text"
-              className="w-full rounded border border-slate-300 px-2 py-1 text-base font-sans focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400"
-              value={state.synAntWord}
-              onChange={(e) =>
-                setState((s) => ({ ...s, synAntWord: e.target.value }))
-              }
-            />
-
-            <label
-              className={`whitespace-nowrap text-sm ${syllableDisabled ? "text-slate-400" : "text-slate-800"
-                }`}
-            >
-              <span className="mr-1 text-xs align-middle">and</span>
-              <select
-                className="rounded border border-slate-300 bg-white px-1 py-0.5 text-sm align-middle"
-                disabled={syllableDisabled}
-                value={state.syllableMode}
-                onChange={(e) =>
-                  setState((s) => ({
-                    ...s,
-                    syllableMode: e.target.value as SylMode,
-                  }))
-                }
-              >
-                <option value="exact">exactly</option>
-                <option value="less">less than</option>
-              </select>
-            </label>
-            <div
-              className={`flex items-center gap-2 ${syllableDisabled ? "text-slate-400" : ""
-                }`}
-            >
+          <div className="flex flex-col gap-6">
+            <div className="flex items-baseline gap-6">
+              <label className="w-96 text-right text-4xl whitespace-nowrap">
+                Rhymes with
+              </label>
               <input
-                type="number"
-                min={state.syllableMode === "exact" ? 1 : 2}
-                max={20}
-                disabled={syllableDisabled}
-                className="w-16 rounded border border-slate-300 px-1 py-1 text-base font-sans focus:border-sky-400 focus:outline-none focus:ring-1 focus:ring-sky-400 disabled:bg-slate-100"
-                value={state.syllables}
+                type="text"
+                className="w-[24rem] rounded-lg border border-slate-300 px-4 py-2 text-4xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                value={state.rhyme}
                 onChange={(e) =>
-                  setState((s) => ({ ...s, syllables: e.target.value }))
+                  setState((s) => ({ ...s, rhyme: e.target.value }))
                 }
               />
-              <span className="text-lg">{syllableLabel}</span>
+            </div>
+
+            <div className="flex items-baseline gap-6">
+              <label className="w-96 text-right text-4xl whitespace-nowrap">
+                Starts with
+              </label>
+              <input
+                type="text"
+                className="w-[24rem] rounded-lg border border-slate-300 px-4 py-2 text-4xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                value={state.starts}
+                onChange={(e) =>
+                  setState((s) => ({ ...s, starts: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="flex items-baseline gap-6">
+              <label className="w-96 text-right text-4xl whitespace-nowrap">
+                <select
+                  className="mr-2 rounded-lg border border-slate-300 bg-white px-2 py-1 text-2xl align-baseline"
+                  value={state.synAntChoice}
+                  onChange={(e) =>
+                    setState((s) => ({
+                      ...s,
+                      synAntChoice: e.target.value as SynAnt,
+                    }))
+                  }
+                >
+                  <option value="synonym">Synonyms</option>
+                  <option value="antonym">Antonyms</option>
+                </select>
+                of
+              </label>
+              <input
+                type="text"
+                className="w-[24rem] rounded-lg border border-slate-300 px-4 py-2 text-4xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                value={state.synAntWord}
+                onChange={(e) =>
+                  setState((s) => ({ ...s, synAntWord: e.target.value }))
+                }
+              />
+            </div>
+
+            <div className="flex items-baseline gap-6">
+              <label
+                className={`w-96 text-right text-2xl whitespace-nowrap ${syllableDisabled ? "text-slate-400" : "text-slate-800"
+                  }`}
+              >
+                <span className="mr-2 text-xl align-middle">and</span>
+                <select
+                  className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-2xl align-baseline"
+                  disabled={syllableDisabled}
+                  value={state.syllableMode}
+                  onChange={(e) =>
+                    setState((s) => ({
+                      ...s,
+                      syllableMode: e.target.value as SylMode,
+                    }))
+                  }
+                >
+                  <option value="exact">exactly</option>
+                  <option value="less">less than</option>
+                </select>
+              </label>
+              <div
+                className={`flex items-center gap-4 ${syllableDisabled ? "text-slate-400" : ""
+                  }`}
+              >
+                <input
+                  type="number"
+                  min={state.syllableMode === "exact" ? 1 : 2}
+                  max={20}
+                  disabled={syllableDisabled}
+                  className="w-32 rounded-lg border border-slate-300 px-2 py-2 text-3xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400 disabled:bg-slate-100"
+                  value={state.syllables}
+                  onChange={(e) =>
+                    setState((s) => ({ ...s, syllables: e.target.value }))
+                  }
+                />
+                <span className="text-4xl">{syllableLabel}</span>
+              </div>
             </div>
           </div>
 
