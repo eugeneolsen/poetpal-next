@@ -253,19 +253,19 @@ export default function Page() {
         </h2>
       </header>
 
-      <section className="mt-6 w-full max-w-4xl px-4">
+      <section className="mt-6 w-full max-w-xl px-4">
         <form
           onSubmit={handleSubmit}
           className="w-full space-y-4 rounded-lg bg-transparent"
         >
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 items-center">
             <div className="flex items-baseline gap-6">
-              <label className="w-96 text-right text-4xl whitespace-nowrap">
+              <label className="w-64 text-right text-4xl whitespace-nowrap">
                 Rhymes with
               </label>
               <input
                 type="text"
-                className="w-[24rem] rounded-lg border border-slate-300 px-4 py-2 text-4xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                className="w-64 rounded-lg border border-slate-300 bg-[#fffff0] hover:bg-[#dde7ea] px-4 py-2 text-4xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
                 value={state.rhyme}
                 onChange={(e) =>
                   setState((s) => ({ ...s, rhyme: e.target.value }))
@@ -274,12 +274,12 @@ export default function Page() {
             </div>
 
             <div className="flex items-baseline gap-6">
-              <label className="w-96 text-right text-4xl whitespace-nowrap">
+              <label className="w-64 text-right text-4xl whitespace-nowrap">
                 Starts with
               </label>
               <input
                 type="text"
-                className="w-[24rem] rounded-lg border border-slate-300 px-4 py-2 text-4xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                className="w-64 rounded-lg border border-slate-300 bg-[#fffff0] hover:bg-[#dde7ea] px-4 py-2 text-4xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
                 value={state.starts}
                 onChange={(e) =>
                   setState((s) => ({ ...s, starts: e.target.value }))
@@ -288,7 +288,7 @@ export default function Page() {
             </div>
 
             <div className="flex items-baseline gap-6">
-              <label className="w-96 text-right text-4xl whitespace-nowrap">
+              <label className="w-64 text-right text-4xl whitespace-nowrap">
                 <select
                   className="mr-2 rounded-lg border border-slate-300 bg-white px-2 py-1 text-2xl align-baseline"
                   value={state.synAntChoice}
@@ -306,7 +306,7 @@ export default function Page() {
               </label>
               <input
                 type="text"
-                className="w-[24rem] rounded-lg border border-slate-300 px-4 py-2 text-4xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                className="w-64 rounded-lg border border-slate-300 bg-[#fffff0] hover:bg-[#dde7ea] px-4 py-2 text-4xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400"
                 value={state.synAntWord}
                 onChange={(e) =>
                   setState((s) => ({ ...s, synAntWord: e.target.value }))
@@ -316,7 +316,7 @@ export default function Page() {
 
             <div className="flex items-baseline gap-6">
               <label
-                className={`w-96 text-right text-2xl whitespace-nowrap ${syllableDisabled ? "text-slate-400" : "text-slate-800"
+                className={`w-64 text-right text-2xl whitespace-nowrap ${syllableDisabled ? "text-slate-400" : "text-slate-800"
                   }`}
               >
                 <span className="mr-2 text-xl align-middle">and</span>
@@ -344,7 +344,7 @@ export default function Page() {
                   min={state.syllableMode === "exact" ? 1 : 2}
                   max={20}
                   disabled={syllableDisabled}
-                  className="w-32 rounded-lg border border-slate-300 px-2 py-2 text-3xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400 disabled:bg-slate-100"
+                  className="w-32 rounded-lg border border-slate-300 bg-[#fffff0] hover:bg-[#dde7ea] px-2 py-2 text-3xl font-sans focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400 disabled:bg-slate-100"
                   value={state.syllables}
                   onChange={(e) =>
                     setState((s) => ({ ...s, syllables: e.target.value }))
@@ -359,14 +359,14 @@ export default function Page() {
             <button
               type="submit"
               disabled={isLoading}
-              className="rounded bg-sky-500 px-4 py-1 text-lg text-white shadow hover:bg-sky-600 disabled:opacity-60"
+              className="rounded bg-sky-500 px-6 py-2 text-3xl text-white shadow hover:bg-sky-600 disabled:opacity-60"
             >
               {isLoading ? "Searching..." : "Submit"}
             </button>
             <button
               type="button"
               onClick={handleClear}
-              className="rounded border border-slate-300 bg-white px-4 py-1 text-lg text-slate-700 shadow hover:bg-slate-50"
+              className="rounded border border-slate-300 bg-white px-6 py-2 text-3xl text-slate-700 shadow hover:bg-slate-50"
             >
               Clear
             </button>
