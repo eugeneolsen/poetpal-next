@@ -256,7 +256,7 @@ export default function Page() {
       <section className="mt-6 w-full max-w-xl px-4">
         <form
           onSubmit={handleSubmit}
-          className="w-full space-y-4 rounded-lg bg-white/70 p-4 shadow-md backdrop-blur"
+          className="w-full space-y-4 rounded-lg bg-transparent p-4"
         >
           <div className="grid grid-cols-[auto,1fr] items-center gap-3">
             <label className="whitespace-nowrap text-lg">
@@ -309,9 +309,8 @@ export default function Page() {
             />
 
             <label
-              className={`whitespace-nowrap text-sm ${
-                syllableDisabled ? "text-slate-400" : "text-slate-800"
-              }`}
+              className={`whitespace-nowrap text-sm ${syllableDisabled ? "text-slate-400" : "text-slate-800"
+                }`}
             >
               <span className="mr-1 text-xs align-middle">and</span>
               <select
@@ -330,9 +329,8 @@ export default function Page() {
               </select>
             </label>
             <div
-              className={`flex items-center gap-2 ${
-                syllableDisabled ? "text-slate-400" : ""
-              }`}
+              className={`flex items-center gap-2 ${syllableDisabled ? "text-slate-400" : ""
+                }`}
             >
               <input
                 type="number"
