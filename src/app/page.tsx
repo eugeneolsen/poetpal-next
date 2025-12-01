@@ -258,7 +258,7 @@ export default function Page() {
           onSubmit={handleSubmit}
           className="w-full space-y-4 rounded-lg bg-transparent"
         >
-          <div className="flex flex-col gap-6 items-center">
+          <div className="flex flex-col gap-6">
             <div className="flex items-baseline gap-6">
               <label className="w-40 text-left text-4xl whitespace-nowrap">
                 Rhymes with
@@ -316,7 +316,7 @@ export default function Page() {
 
             <div className="flex items-baseline gap-6">
               <label
-                className={`w-64 text-left text-2xl whitespace-nowrap ${syllableDisabled ? "text-slate-400" : "text-slate-800"
+                className={`w-40 text-left text-2xl whitespace-nowrap ${syllableDisabled ? "text-slate-400" : "text-slate-800"
                   }`}
               >
                 <span className="mr-2 text-xl align-middle">and</span>
