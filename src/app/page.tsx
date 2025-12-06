@@ -53,7 +53,7 @@ export default function Page() {
     [state.syllables]
   );
 
-  const syllableDisabled = state.rhyme.trim().length === 0;
+
 
   const filteredPerfect = useMemo(
     () =>
@@ -162,7 +162,7 @@ export default function Page() {
     }
   }
 
-  const syllableLabel = syllablesNumeric === 1 ? "syllable" : "syllables";
+
 
   return (
     <main className="flex min-h-screen flex-col items-center pb-8">
@@ -182,8 +182,6 @@ export default function Page() {
           handleSubmit={handleSubmit}
           handleClear={handleClear}
           isLoading={isLoading}
-          syllableDisabled={syllableDisabled}
-          syllableLabel={syllableLabel}
         />
       </section>
 
