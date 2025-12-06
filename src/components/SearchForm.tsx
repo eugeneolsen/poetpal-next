@@ -7,8 +7,6 @@ interface SearchFormProps {
     handleSubmit: (e: FormEvent) => void;
     handleClear: () => void;
     isLoading: boolean;
-    syllableDisabled: boolean;
-    syllableLabel: string;
 }
 
 export default function SearchForm({
@@ -17,9 +15,10 @@ export default function SearchForm({
     handleSubmit,
     handleClear,
     isLoading,
-    syllableDisabled,
-    syllableLabel,
 }: SearchFormProps) {
+    const syllableDisabled = state.rhyme.trim().length === 0;
+    const syllablesNumeric = state.syllables ? parseInt(state.syllables, 10) || 0 : 0;
+    const syllableLabel = syllablesNumeric === 1 ? "syllable" : "syllables";
     return (
         <form
             onSubmit={handleSubmit}
