@@ -167,7 +167,7 @@ export default function Page() {
 
 
   return (
-    <main className="flex min-h-screen flex-col items-center pb-8">
+    <main className="flex min-h-screen flex-col items-center">
       <header className="mt-6 text-center">
         <h1 className="text-4xl md:text-5xl text-slate-800 tracking-wide">
           Poet&apos;s Pal&trade;
@@ -202,10 +202,10 @@ export default function Page() {
           copiedWord={copiedWord}
         />
 
-        <footer className="mt-4 text-center text-s font-sans text-slate-700">
-          &copy; 2025 Eugene C. Olsen
-        </footer>
       </section>
+      <footer className="w-full mt-auto py-1 text-center text-s font-sans text-white bg-[#5D6273]">
+        &copy; 2025 Eugene C. Olsen
+      </footer>
     </main>
   );
 }
