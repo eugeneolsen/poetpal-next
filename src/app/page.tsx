@@ -203,7 +203,7 @@ export default function Page() {
         />
 
       </section>
-      <footer className="w-full mt-auto py-1 text-center text-s font-sans text-white bg-[#5D6273]">
+      <footer className="fixed bottom-0 w-full py-1 text-center text-s font-sans text-white bg-[rgba(32,40,64,0.7)] z-50">
         &copy; 2025 Eugene C. Olsen
       </footer>
     </main>
