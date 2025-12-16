@@ -44,7 +44,7 @@ export default function Page() {
   });
 
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedWord, setCopiedWord] = useState<string | null>(null);
 
@@ -83,10 +83,24 @@ export default function Page() {
     [results.imperfect, syllablesNumeric, state.syllableMode]
   );
 
+  let info = null;
+  if (hasSearched) {
+    const totalPerfect = filteredPerfect.length;
+    const totalImperfect = filteredImperfect.length;
+
+    if (totalPerfect === 0 && totalImperfect === 0) {
+      info = "No results found. Try adjusting your filters.";
+    } else if (totalImperfect > 0) {
+      info = `Showing ${totalPerfect} perfect rhymes and ${totalImperfect} near rhymes.`;
+    } else {
+      info = `Showing ${totalPerfect} perfect rhymes.`;
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    setInfo(null);
+    setHasSearched(false);
     setCopiedWord(null);
 
     // Nothing entered at all – mirror your original behavior: just do nothing.
@@ -103,19 +117,7 @@ export default function Page() {
       setIsLoading(true);
       const nextResults = await getWordLists(state);
       setResults(nextResults);
-
-      const totalPerfect = nextResults.perfect.length;
-      const totalImperfect = nextResults.imperfect.length;
-
-      if (totalPerfect === 0 && totalImperfect === 0) {
-        setInfo("No results found. Try adjusting your filters.");
-      } else if (totalImperfect > 0) {
-        setInfo(
-          `Showing ${totalPerfect} perfect rhymes and ${totalImperfect} near rhymes.`
-        );
-      } else {
-        setInfo(`Showing ${totalPerfect} perfect rhymes.`);
-      }
+      setHasSearched(true);
     } catch (err) {
       const msg =
         err instanceof Error ? err.message : "Unexpected error contacting API.";
@@ -136,7 +138,7 @@ export default function Page() {
     });
     setResults({ perfect: [], imperfect: [] });
     setError(null);
-    setInfo(null);
+    setHasSearched(false);
     setCopiedWord(null);
   }
 
